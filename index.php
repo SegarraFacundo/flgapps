@@ -1,3 +1,73 @@
+<?php
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require $_SERVER['DOCUMENT_ROOT'] . '/mail/Exception.php';
+require $_SERVER['DOCUMENT_ROOT'] . '/mail/PHPMailer.php';
+require $_SERVER['DOCUMENT_ROOT'] . '/mail/SMTP.php';
+
+$errors = [];
+$errorMessage = '';
+
+
+if (!empty($_POST)) {
+  $fullName = $_POST['fullName'];
+  $phone = $_POST['phone'];
+  $email = $_POST['email'];
+  $message = $_POST['message'];
+ 
+  if (empty($fullName)) {
+      $errors[] = 'El campo "Nombre Completo" esta vacío';
+  }
+
+  if (empty($phone)) {
+    $errors[] = 'El campo "Teléfono" esta vacío';
+}
+
+  if (empty($email)) {
+      $errors[] = 'El campo "Email" esta vacío';
+  } else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      $errors[] = 'Email invalido';
+  }
+
+  if (empty($message)) {
+      $errors[] = 'El campo "Mensaje" esta vacío';
+  }
+
+  if (empty($errors)) {
+    $mail = new PHPMailer;
+    $mail->isSMTP(); 
+    $mail->SMTPDebug = 0; // 0 = off (for production use) - 1 = client messages - 2 = client and server messages
+    $mail->Host = "smtp.gmail.com"; // use $mail->Host = gethostbyname('smtp.gmail.com'); // if your network does not support SMTP over IPv6
+    $mail->Port = 587; // TLS only
+    $mail->SMTPSecure = 'tls'; // ssl is deprecated
+    $mail->SMTPAuth = true;
+    $mail->Username = 'info.flgapps@gmail.com'; // email
+    $mail->Password = 'password'; // password
+    $mail->addAddress('info.flgapps@gmail.com', 'FLG APPs'); // From email and name
+    $mail->setFrom($email, $fullName); // to email and name
+    $mail->Subject = 'Contacto de la Web';
+    $mail->msgHTML('<b>Mensaje:</b> ' . $message . '<br /><b>Teléfono:</b> ' . $phone . '<br /><b>Email:</b> ' . $email); //$mail->msgHTML(file_get_contents('contents.html'), __DIR__); //Read an HTML message body from an external file, convert referenced images to embedded,
+    $mail->AltBody = 'HTML messaging not supported'; // If html emails is not supported by the receiver, show this body
+    // $mail->addAttachment('images/phpmailer_mini.png'); //Attach an image file
+    $mail->SMTPOptions = array(
+      'ssl' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true
+      )
+    );
+    $mail->send();
+    // if(!$mail->send()){
+    //     echo "Mailer Error: " . $mail->ErrorInfo;
+    // }else{
+    //     echo "Message sent!";
+    // }
+  }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 
@@ -15,14 +85,14 @@
   <link rel="stylesheet" href="assets/css/tailwind.css" />
 
 </head>
-
 <body>
+
   <!-- ====== Navbar Section Start -->
   <div class="ud-header absolute top-0 left-0 z-40 flex w-full items-center bg-transparent sticky">
     <div class="container">
       <div class="relative -mx-4 flex items-center justify-between">
         <div class="w-60 max-w-full px-4">
-          <a href="index.html" class="navbar-logo block w-full py-5">
+          <a href="index.php" class="navbar-logo block w-full py-5">
             <img src="assets/images/logo/logo-white.png" alt="logo" class="header-logo w-full" />
           </a>
         </div>
@@ -2240,7 +2310,7 @@
                 Facundo Segarra
               </h4>
               <p class="mb-5 text-sm font-medium text-body-color">
-                Dueño fundador
+                Gestor de Proyecto 
               </p>
               <div class="flex items-center justify-center">
                 <a href="https://facebook.com/FacundoSegarra/" target="_blank"
@@ -2261,13 +2331,19 @@
                       d="M13.7397 3.03418C13.3676 3.03418 13.0527 3.34905 13.0527 3.72116C13.0527 4.09328 13.3676 4.40815 13.7397 4.40815C14.1118 4.40815 14.4267 4.09328 14.4267 3.72116C14.4267 3.34905 14.1405 3.03418 13.7397 3.03418Z" />
                   </svg>
                 </a>
-                <a href="https://www.linkedin.com/company/flg-apps/" target="_blank"
+                <!-- <a href="https://www.linkedin.com/company/flg-apps/" target="_blank"
                 class="mx-2 flex h-8 w-8 items-center justify-center text-[#cdced6] hover:text-primary">
                 <svg width="18" height="14" viewBox="0 0 18 14" class="fill-current">
                   <path
                     d="M15.9968 2.41096L17.1 1.09589C17.4194 0.739726 17.5065 0.465753 17.5355 0.328767C16.6645 0.821918 15.8516 0.986301 15.329 0.986301H15.1258L15.0097 0.876712C14.3129 0.30137 13.4419 0 12.5129 0C10.4806 0 8.88387 1.58904 8.88387 3.42466C8.88387 3.53425 8.88387 3.69863 8.9129 3.80822L9 4.35616L8.39032 4.32877C4.67419 4.21918 1.62581 1.20548 1.13226 0.684932C0.319355 2.05479 0.783871 3.36986 1.27742 4.19178L2.26452 5.72603L0.696774 4.90411C0.725806 6.05479 1.19032 6.9589 2.09032 7.61644L2.87419 8.16438L2.09032 8.46575C2.58387 9.86301 3.6871 10.4384 4.5 10.6575L5.57419 10.9315L4.55806 11.589C2.93226 12.6849 0.9 12.6027 0 12.5205C1.82903 13.726 4.00645 14 5.51613 14C6.64839 14 7.49032 13.8904 7.69355 13.8082C15.8226 12 16.2 5.15068 16.2 3.78082V3.58904L16.3742 3.47945C17.3613 2.60274 17.7677 2.13699 18 1.86301C17.9129 1.89041 17.7968 1.94521 17.6806 1.9726L15.9968 2.41096Z" />
                 </svg>
-              </a>
+              </a> -->
+              <a href="https://www.linkedin.com/company/flg-apps/" target="_blank" class="px-3 text-[#dddddd] hover:text-white">
+              <svg width="18" height="18" viewBox="0 0 18 18" class="fill-current">
+                <path
+                  d="M16.7821 0.947388H1.84847C1.14272 0.947388 0.578125 1.49747 0.578125 2.18508V16.7623C0.578125 17.4224 1.14272 18 1.84847 18H16.7257C17.4314 18 17.996 17.4499 17.996 16.7623V2.15757C18.0525 1.49747 17.4879 0.947388 16.7821 0.947388ZM5.7442 15.4421H3.17528V7.32837H5.7442V15.4421ZM4.44563 6.2007C3.59873 6.2007 2.94944 5.5406 2.94944 4.74297C2.94944 3.94535 3.62696 3.28525 4.44563 3.28525C5.26429 3.28525 5.94181 3.94535 5.94181 4.74297C5.94181 5.5406 5.32075 6.2007 4.44563 6.2007ZM15.4835 15.4421H12.9146V11.509C12.9146 10.5739 12.8864 9.33618 11.5596 9.33618C10.2045 9.33618 10.0069 10.3813 10.0069 11.4265V15.4421H7.438V7.32837H9.95046V8.45605H9.9787C10.3457 7.79594 11.1644 7.13584 12.4347 7.13584C15.0601 7.13584 15.54 8.7861 15.54 11.0414V15.4421H15.4835Z" />
+              </svg>
+            </a>
               </div>
             </div>
           </div>
@@ -2388,7 +2464,7 @@
             <div class="text-center">
               <h4 class="mb-2 text-lg font-medium text-dark">Facundo Segarra</h4>
               <p class="mb-5 text-sm font-medium text-body-color">
-                Líder del Backend y del Área de Ventas
+                Marketing y Ventas
               </p>
               <div class="flex items-center justify-center">
                 <a href="javascript:void(0)"
@@ -2467,10 +2543,7 @@
                 </div>
                 <div>
                   <h5 class="mb-6 text-lg font-semibold">¿Cómo podemos ayudar?</h5>
-                  <p class="text-base text-body-color">info@flgapps.com.ar</p>
-                  <p class="text-base text-body-color">
-                    contacto@flgapps.com.ar
-                  </p>
+                  <p class="text-base text-body-color">info.flgapps@gmail.com</p>
                 </div>
               </div>
             </div>
@@ -2484,8 +2557,8 @@
             <h3 class="mb-8 text-2xl font-semibold md:text-[26px]">
               Mandanos un mensaje
             </h3>
-            <form>
-              <div class="mb-6">
+            <form method="post" id="contact-form">
+            <div class="mb-6">
                 <label for="fullName" class="block text-xs text-dark">Nombre Completo*</label>
                 <input type="text" name="fullName" placeholder="Gimena Díaz"
                   class="w-full border-0 border-b border-[#f1f1f1] py-4 focus:border-primary focus:outline-none" />
@@ -2511,6 +2584,19 @@
                   Enviar Mensaje
                 </button>
               </div>
+              <?php 
+              if (!empty($_POST) && !empty($errors)) { 
+                echo '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">';
+                foreach($errors as $error) {
+                  echo '<span class="block sm:inline">' . $error . '</span>
+                    <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                      <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                    </span>';
+                }
+                echo '</div>';
+              }
+              ?>
+              <div id="errors"></div>
             </form>
           </div>
         </div>
@@ -2629,10 +2715,10 @@
           <div class="w-full px-4 md:w-2/3 lg:w-1/2">
             <div class="my-1">
               <div class="-mx-3 flex items-center justify-center md:justify-start">
-                <a href="javascript:void(0)" class="px-3 text-base text-[#f3f4fe] hover:text-primary">
+                <a href="politicas-de-privacidad.html" class="px-3 text-base text-[#f3f4fe] hover:text-primary">
                   Políticas de Privacidad
                 </a>
-                <a href="javascript:void(0)" class="px-3 text-base text-[#f3f4fe] hover:text-primary">
+                <a href="terminos-del-servicio.html" class="px-3 text-base text-[#f3f4fe] hover:text-primary">
                   Terminos del Servicio
                 </a>
               </div>
@@ -2827,6 +2913,67 @@
   <!-- ====== All Scripts -->
 
   <script src="assets/js/main.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/validate.js/0.13.1/validate.min.js"></script>
+  <script>
+    const constraints = {
+        fullName: {
+            presence: { 
+              allowEmpty: false,
+              message: "es requerido"
+            }
+        },
+        phone: {
+            presence: { 
+              allowEmpty: false,
+              message: "es requerido"
+            }
+        },
+        email: {
+            presence: { 
+              allowEmpty: false,
+              message: "es requerido"
+            },
+            email: {
+              message: "es invalido"
+            }
+        },
+        message: {
+            presence: { 
+              allowEmpty: false,
+              message: "es requerido"
+            }
+        }
+    };
+ 
+    const form = document.getElementById('contact-form');
+ 
+    form.addEventListener('submit', function (event) {
+      const formValues = {
+          fullName: form.elements.fullName.value,
+          phone: form.elements.phone.value,
+          email: form.elements.email.value,
+          message: form.elements.message.value
+      };
+ 
+      const errors = validate(formValues, constraints);
+ 
+      if (errors) {
+        console.log(errors);
+        event.preventDefault();
+        const errorMessage = Object.values(errors).map(function (error) {
+          return `<span class="block sm:inline">${error[0]}</span>`
+        });
+
+        const errorsBox = document.getElementById('errors');
+        errorsBox.innerHTML =  `<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          ${errorMessage.join('')}
+          <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+            <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+          </span>
+        </div>`;
+      }
+    }, false);
+ </script>
 </body>
 
 </html>
